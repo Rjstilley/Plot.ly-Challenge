@@ -1,61 +1,57 @@
-
-
-// // function bbdata (id)
-
-
-// // d3.json("data/samples.json").then(data)=> { 
-// //     console.log(data)
-// // }
-
-// const url = "http://robdunnlab.com/projects/belly-button-biodiversity/";
-
-// // Fetch the JSON data and console log it
-// d3.json(url).then(function (data) {
-//     console.log(data);
-// });
-
-
-// // d3.json("samples.json", function (data) {
-// //     console.log(data);
-// // });
-
-// var trace1 = {
-//     x: ["beer", "wine", "martini", "margarita",
-//         "ice tea", "rum & coke", "mai tai", "gin & tonic"],
-//     y: [22.7, 17.1, 9.9, 8.7, 7.2, 6.1, 6.0, 4.6],
-//     type: "bar"
-// };
-
-// var data = [trace1];
-
-// var layout = {
-//     title: "'Bar' Chart"
-// };
-
-// Plotly.newPlot("plot", data, layout);
-
-let url = ‘https://raw.githubusercontent.com/FreeCodeCamp/ProjectReferenceData/master/GDP-data.json'
-    let xl = []
-let yl = []
-Plotly.d3.json(url, function (figure) {
-    let data = figure.data
-    for (var i = 0; i < data.length; i++) {
-        xl.push(data[i][0])
-        yl.push(data[i][1])
-    }
-    let trace = {
-        x: xl,
-        y: yl,
-        marker: {
-            color: ‘rgb(55, 83, 109) ’
-        },
-        type: ’bar’,
-        let layout = {
-            title: “Belly Button Diversity”,
-            yaxis: { title: “USA GDP” },
-            xaxis: { title: ‘Date’ }
+function buildPlots(userInput) {
+    d3.json('samples.json').then((d) => {
+        var filter = d.samples.filter(i => i.id == userInput)
+        var filtids = filter[0].otu_ids
+        var sample = filter[0].sample_values
+        var labels = filter[0].otu_labels
+        var top_ids = filtids.slice(0, 10).reverse()
+        var top_samples = sample.slice(0, 10).reverse()
+        var top_labels = labels.slice(0, 10).reverse()
+        var trace1 = {
+            x: top_samples,
+            y: top_ids.map(i => `OTU ${i}`),
+            text: top_labels,
+            type: "bar",
+            orientation: "h",
         }
-Plotly.plot(document.getElementById(‘graph’), [trace], layout, { displayModeBar: false });
+        Plotly.newPlot('bar', [trace1])
+        var trace2 = {
+            x: filtids,
+            y: sample,
+            text: labels,
+            mode: 'markers',
+            marker: {
+                size: sample,
+                color: filtids
+            }
+        }
+        Plotly.newPlot('bubble', [trace2])
+        var bubbl_li = d3.select('#sample-metadata')
+        var selected_data = d.metadata.filter(i => i.id == userInput)
+        selected_data.forEach(i => {
+            bubbl_li.html('')
+            bubbl_li.append('li').html(`ID: ${i.id}<br>`)
+            bubbl_li.append('li').html(`WAFREQ: ${i.wfreq}<br>`)
+            bubbl_li.append('li').html(`Age: ${i.age}<br>`)
+            bubbl_li.append('li').html(`Ethnicity: ${i.ethnicity}<br>`)
+            bubbl_li.append('li').html(`Location: ${i.location}<br>`)
+            bubbl_li.append('li').html(`BBType: ${i.bbtype}<br>`)
+            bubbl_li.append('li').html(`Gender: ${i.gender}<br>`)
+        })
     })
+}
 
+function optionChanged(option) {
+    buildPlots(option)
+}
 
+d3.json('samples.json').then((d) => {
+    console.log(d);
+    var dropdown = d3.select('#selDataset')
+    var otu_idArr = []
+    d.metadata.forEach(i => {
+        otu_idArr.push(i.id)
+        dropdown.append('option').text(i.id)
+    })
+    console.log(otu_idArr)
+});
